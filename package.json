@@ -1,13 +1,29 @@
 {
   "name": "algolens",
   "displayName": "AlgoLens",
-  "description": "Interactive Algorithm Analysis and Visualization Extension",
-  "version": "0.0.1",
+  "description": "Interactive Algorithm Analysis and Visual Chalkboard Trace",
+  "version": "0.1.0",
+  "publisher": "YOUR_PUBLISHER_ID",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/YOUR_GITHUB_USERNAME/algolens.git"
+  },
   "engines": {
-    "vscode": "^1.85.0"
+    "vscode": "^1.140.0"
   },
   "categories": [
+    "Programming Languages",
+    "Education",
     "Other"
+  ],
+  "keywords": [
+    "algorithm",
+    "visualization",
+    "python",
+    "sorting",
+    "bfs",
+    "educational"
   ],
   "activationEvents": [],
   "main": "./out/extension.js",
