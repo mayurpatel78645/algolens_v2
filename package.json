@@ -7,7 +7,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/YOUR_GITHUB_USERNAME/algolens.git"
+    "url": "https://github.com/mayurpatel78645/algolens_v2"
   },
   "engines": {
     "vscode": "^1.140.0"

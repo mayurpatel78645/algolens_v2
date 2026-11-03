@@ -11,7 +11,7 @@ Instead of staring at terminal print statements or setting breakpoints in a debu
 ### 1. Array & Sorting Visualization (Insertion Sort, Bubble Sort)
 Track pointers (`i`, `j`), in-flight values (`key`), and watch memory updates pulse in red as shifts or swaps occur[cite: 10].
 
-![Insertion Sort Trace](images/insertion_sort_demo.png)
+![Insertion Sort Trace](https://github.com/mayurpatel78645/algolens_v2/main/images/insertion_sort_demo.png)
 
 - **Synchronized Line Highlighting**: Follows source code execution line by line.
 - **Dynamic Pointer Indicators**: Overhead tags hover directly above active index positions.
@@ -22,7 +22,7 @@ Track pointers (`i`, `j`), in-flight values (`key`), and watch memory updates pu
 ### 2. Graph & Tree Traversal (Breadth-First Search)
 Watch nodes light up as they are visited and observe elements entering and leaving the internal queue in real time.
 
-![BFS Graph Traversal Trace](images/bfs_graph_demo.png)
+![BFS Graph Traversal Trace](https://github.com/mayurpatel78645/algolens_v2/main/images/bfs_graph_demo.png)
 
 - **Interactive Node States**: Nodes change state visually between current (purple glow), neighbor under evaluation (blue glow), and visited (green).
 - **FIFO Queue Strip**: Displays elements entering and leaving `collections.deque` (`Front ➔ Rear`).
