@@ -1,0 +1,32 @@
+{
+  "name": "algolens",
+  "displayName": "AlgoLens",
+  "description": "Interactive Algorithm Analysis and Visualization Extension",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "algolens.visualize",
+        "title": "AlgoLens: Visualize Algorithm"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.43",
+    "@types/vscode": "^1.140.0",
+    "typescript": "^5.3.0"
+  }
+}
