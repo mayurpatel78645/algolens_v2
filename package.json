@@ -1,9 +1,9 @@
 {
-  "name": "algolens",
-  "displayName": "AlgoLens",
+  "name": "mayur-patel-algolens",
+  "displayName": "Mayur Patel's Algolens",
   "description": "Interactive Algorithm Analysis and Visual Chalkboard Trace",
   "version": "0.1.0",
-  "publisher": "YOUR_PUBLISHER_ID",
+  "publisher": "mayur-patel-algolens-dev",
   "license": "MIT",
   "repository": {
     "type": "git",
