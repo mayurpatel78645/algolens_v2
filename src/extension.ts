@@ -20,7 +20,6 @@ export function activate(context: vscode.ExtensionContext) {
 
         panel.webview.html = getWebviewContent();
 
-        // Execute Python tracer
         const scriptPath = path.join(context.extensionPath, 'python_engine', 'main.py');
         const pyProcess = spawn('python', [scriptPath]);
 
@@ -69,10 +68,10 @@ function getWebviewContent(): string {
             --text-dim: var(--vscode-descriptionForeground, #858585);
             --code-font: var(--vscode-editor-font-family, 'Fira Code', 'Consolas', monospace);
 
-            --accent-compare: #38bdf8;
-            --accent-swap: #f43f5e;
-            --accent-sorted: #10b981;
-            --highlight-line: rgba(56, 189, 248, 0.15);
+            --accent-blue: #38bdf8;
+            --accent-pink: #f43f5e;
+            --accent-green: #10b981;
+            --accent-amber: #f59e0b;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -87,9 +86,8 @@ function getWebviewContent(): string {
             overflow: hidden;
         }
 
-        /* Top Bar Controls */
         header {
-            padding: 12px 20px;
+            padding: 10px 18px;
             background: var(--bg-panel);
             border-bottom: 1px solid var(--border);
             display: flex;
@@ -98,7 +96,7 @@ function getWebviewContent(): string {
         }
 
         .title-group h2 {
-            font-size: 14px;
+            font-size: 13px;
             text-transform: uppercase;
             letter-spacing: 0.08em;
             color: var(--text-dim);
@@ -110,10 +108,7 @@ function getWebviewContent(): string {
             font-weight: 600;
         }
 
-        .controls {
-            display: flex;
-            gap: 8px;
-        }
+        .controls { display: flex; gap: 8px; }
 
         button {
             background: var(--vscode-button-secondaryBackground, #3f3f46);
@@ -124,9 +119,6 @@ function getWebviewContent(): string {
             cursor: pointer;
             font-size: 12px;
             font-weight: 600;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
         }
 
         button:hover { background: var(--vscode-button-secondaryHoverBackground, #52525b); }
@@ -136,21 +128,19 @@ function getWebviewContent(): string {
         }
         button.primary:hover { background: var(--vscode-button-hoverBackground, #0062a3); }
 
-        /* Main Workspace Split */
         .workspace {
             display: grid;
-            grid-template-columns: 42% 58%;
+            grid-template-columns: 46% 54%;
             flex-grow: 1;
-            height: calc(100vh - 58px);
+            height: calc(100vh - 56px);
         }
 
-        /* Code Viewer Panel */
         .code-panel {
             border-right: 1px solid var(--border);
             background: var(--bg-editor);
             overflow-y: auto;
             font-family: var(--code-font);
-            font-size: 12.5px;
+            font-size: 13px;
             line-height: 22px;
         }
 
@@ -165,16 +155,16 @@ function getWebviewContent(): string {
             width: 32px;
             color: var(--text-dim);
             text-align: right;
-            margin-right: 16px;
+            margin-right: 14px;
             user-select: none;
-            opacity: 0.6;
+            opacity: 0.5;
         }
 
         .line-text { flex-grow: 1; }
 
         .code-line.active {
-            background: var(--highlight-line);
-            border-left: 3px solid var(--accent-compare);
+            background: rgba(56, 189, 248, 0.16);
+            border-left: 3px solid var(--accent-blue);
         }
 
         .code-line.active::after {
@@ -183,32 +173,27 @@ function getWebviewContent(): string {
             right: 12px;
             font-size: 11px;
             font-weight: bold;
-            color: var(--accent-compare);
-            opacity: 0.85;
+            color: var(--accent-blue);
         }
 
-        /* Right Side: Blackboard & Memory */
         .chalkboard {
             display: flex;
             flex-direction: column;
-            padding: 24px;
-            gap: 20px;
+            padding: 20px;
+            gap: 16px;
             overflow-y: auto;
-            background: radial-gradient(circle at top right, rgba(255,255,255,0.02), transparent);
         }
 
-        /* Blackboard Note / Teacher Explanation */
         .teacher-note {
             background: var(--bg-panel);
             border: 1px solid var(--border);
-            border-left: 4px solid var(--accent-compare);
-            padding: 16px;
+            border-left: 4px solid var(--accent-blue);
+            padding: 14px;
             border-radius: 6px;
+            transition: all 0.2s ease;
         }
 
-        .teacher-note.swap {
-            border-left-color: var(--accent-swap);
-        }
+        .teacher-note.mutate { border-left-color: var(--accent-pink); }
 
         .note-title {
             font-size: 11px;
@@ -220,11 +205,10 @@ function getWebviewContent(): string {
         }
 
         .note-explanation {
-            font-size: 14px;
-            line-height: 1.4;
+            font-size: 13.5px;
+            line-height: 1.5;
         }
 
-        /* Variable Memory Box (Stack Frame simulation) */
         .memory-box {
             background: var(--bg-panel);
             border: 1px solid var(--border);
@@ -243,15 +227,21 @@ function getWebviewContent(): string {
 
         .var-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
-            gap: 12px;
+            grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+            gap: 10px;
         }
 
         .var-card {
-            background: rgba(0, 0, 0, 0.25);
+            background: rgba(0, 0, 0, 0.3);
             border: 1px solid var(--border);
-            padding: 8px 12px;
+            padding: 10px;
             border-radius: 6px;
+            transition: all 0.2s;
+        }
+
+        .var-card.active-ptr {
+            border-color: var(--accent-amber);
+            box-shadow: 0 0 10px rgba(245, 158, 11, 0.2);
         }
 
         .var-name {
@@ -261,14 +251,14 @@ function getWebviewContent(): string {
         }
 
         .var-val {
-            font-size: 18px;
+            font-size: 16px;
             font-weight: bold;
             font-family: var(--code-font);
             margin-top: 4px;
+            color: #fff;
         }
 
-        /* Array Trace & Pointers */
-        .array-stage {
+        .stage-box {
             background: var(--bg-panel);
             border: 1px solid var(--border);
             border-radius: 8px;
@@ -276,14 +266,15 @@ function getWebviewContent(): string {
             display: flex;
             flex-direction: column;
             gap: 12px;
-            align-items: center;
         }
 
         .cells-container {
             display: flex;
             gap: 14px;
             align-items: flex-end;
-            padding: 10px 0;
+            padding: 16px 0;
+            flex-wrap: wrap;
+            justify-content: center;
         }
 
         .cell-column {
@@ -291,25 +282,27 @@ function getWebviewContent(): string {
             flex-direction: column;
             align-items: center;
             width: 58px;
-            position: relative;
         }
 
         .pointer-tag {
             font-family: var(--code-font);
             font-size: 11px;
             font-weight: bold;
-            height: 24px;
+            height: 28px;
             display: flex;
+            flex-direction: column;
             align-items: center;
-            justify-content: center;
-            color: var(--accent-compare);
+            justify-content: flex-end;
+            color: var(--accent-amber);
             transition: all 0.2s ease;
         }
 
-        .pointer-arrow {
-            font-size: 12px;
-            line-height: 1;
-            margin-bottom: 2px;
+        .pointer-badge {
+            background: rgba(245, 158, 11, 0.2);
+            border: 1px solid var(--accent-amber);
+            padding: 1px 6px;
+            border-radius: 4px;
+            font-size: 10px;
         }
 
         .cell-box {
@@ -324,7 +317,21 @@ function getWebviewContent(): string {
             font-size: 18px;
             font-weight: bold;
             font-family: var(--code-font);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .cell-box.pointer-active {
+            border-color: var(--accent-blue);
+            background: rgba(56, 189, 248, 0.15);
+            transform: translateY(-4px);
+            box-shadow: 0 4px 12px rgba(56, 189, 248, 0.3);
+        }
+
+        .cell-box.mutate-active {
+            border-color: var(--accent-pink);
+            background: rgba(244, 63, 94, 0.25);
+            transform: scale(1.08) translateY(-4px);
+            box-shadow: 0 4px 16px rgba(244, 63, 94, 0.4);
         }
 
         .cell-index {
@@ -333,28 +340,13 @@ function getWebviewContent(): string {
             color: var(--text-dim);
             font-family: var(--code-font);
         }
-
-        /* Pointer & State Modifiers */
-        .cell-box.comparing {
-            border-color: var(--accent-compare);
-            background: rgba(56, 189, 248, 0.15);
-            transform: translateY(-4px);
-            box-shadow: 0 4px 12px rgba(56, 189, 248, 0.25);
-        }
-
-        .cell-box.swapping {
-            border-color: var(--accent-swap);
-            background: rgba(244, 63, 94, 0.2);
-            transform: scale(1.08) translateY(-4px);
-            box-shadow: 0 4px 16px rgba(244, 63, 94, 0.35);
-        }
     </style>
 </head>
 <body>
 
     <header>
         <div class="title-group">
-            <h2>Algorithm Chalkboard</h2>
+            <h2>Algorithm Chalkboard Trace</h2>
             <div class="step-counter" id="step-info">Step: 0 / 0</div>
         </div>
         <div class="controls">
@@ -365,33 +357,22 @@ function getWebviewContent(): string {
     </header>
 
     <div class="workspace">
-        <!-- Panel 1: Original Code -->
-        <div class="code-panel" id="code-container">
-            <!-- Rendered line-by-line via JavaScript -->
-        </div>
+        <div class="code-panel" id="code-container"></div>
 
-        <!-- Panel 2: Notebook Breakdown -->
         <div class="chalkboard">
-            <!-- Dynamic Teacher Explanation -->
             <div class="teacher-note" id="teacher-card">
-                <div class="note-title" id="note-type">OBSERVATION</div>
-                <div class="note-explanation" id="note-text">Initializing visual trace...</div>
+                <div class="note-title" id="note-type">TEACHER OBSERVATION</div>
+                <div class="note-explanation" id="note-text">Initializing chalkboard...</div>
             </div>
 
-            <!-- Memory Watch Box -->
             <div class="memory-box">
                 <div class="section-label">Active Stack Frame / Variables</div>
-                <div class="var-grid" id="var-grid">
-                    <!-- Dynamic variables inserted here -->
-                </div>
+                <div class="var-grid" id="var-grid"></div>
             </div>
 
-            <!-- Detailed Visual Array Stage -->
-            <div class="array-stage">
-                <div class="section-label" style="align-self: flex-start;">Memory Array Layout (arr)</div>
-                <div class="cells-container" id="cells-container">
-                    <!-- Dynamic Array Nodes with Pointers -->
-                </div>
+            <div class="stage-box">
+                <div class="section-label" id="array-label">Memory Array Layout</div>
+                <div class="cells-container" id="cells-container"></div>
             </div>
         </div>
     </div>
@@ -437,126 +418,113 @@ function getWebviewContent(): string {
 
         function render() {
             if (!events || events.length === 0) return;
-
             const curr = events[index];
 
-            // 1. Update Step Counter
+            // 1. Step Counter
             document.getElementById('step-info').innerText = 'Step: ' + (index + 1) + ' / ' + events.length;
 
-            // 2. Synchronize Line Highlight in Code Viewer
+            // 2. Synchronize Line Highlight
             document.querySelectorAll('.code-line').forEach(el => el.classList.remove('active'));
             if (curr.line) {
                 const targetLine = document.getElementById('src-line-' + curr.line);
                 if (targetLine) {
                     targetLine.classList.add('active');
-                    targetLine.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    targetLine.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
                 }
             }
 
-            // 3. Extract Variables (Pointers and Values)
-            const idx1 = (curr.indices && curr.indices.length > 0) ? curr.indices[0] : null;
-            const idx2 = (curr.indices && curr.indices.length > 1) ? curr.indices[1] : null;
-            const val1 = idx1 !== null ? curr.array[idx1] : null;
-            const val2 = idx2 !== null ? curr.array[idx2] : null;
+            // 3. Dynamic Variable Inspection Panel
+            const varGrid = document.getElementById('var-grid');
+            varGrid.innerHTML = '';
+            const locals = curr.locals || {};
 
-            // 4. Blackboard Teacher Explanation
+            for (const [key, val] of Object.entries(locals)) {
+                if (key === curr.array_name) continue; // Don't duplicate the full array in cards
+
+                const card = document.createElement('div');
+                card.className = 'var-card';
+                if (curr.pointers && curr.pointers[key] !== undefined) {
+                    card.classList.add('active-ptr');
+                }
+
+                const formattedVal = typeof val === 'object' ? JSON.stringify(val) : val;
+                card.innerHTML = '<div class="var-name">' + key + '</div><div class="var-val">' + formattedVal + '</div>';
+                varGrid.appendChild(card);
+            }
+
+            // 4. Blackboard Explanation
             const noteCard = document.getElementById('teacher-card');
             const noteType = document.getElementById('note-type');
             const noteText = document.getElementById('note-text');
 
-            if (curr.type === 'COMPARE') {
-                noteCard.className = 'teacher-note';
-                noteType.innerText = 'COMPARISON CHECK';
-                noteText.innerHTML = 'Examining adjacent elements at index <code>j=' + idx1 + '</code> (value <strong>' + val1 + '</strong>) and <code>j+1=' + idx2 + '</code> (value <strong>' + val2 + '</strong>). ' +
-                    (val1 > val2 ? 'Since <strong>' + val1 + ' &gt; ' + val2 + '</strong>, order is incorrect; a swap will follow.' : 'Since <strong>' + val1 + ' &le; ' + val2 + '</strong>, these elements are currently ordered.');
-            } else if (curr.type === 'SWAP') {
-                noteCard.className = 'teacher-note swap';
-                noteType.innerText = 'STATE MUTATION (SWAP)';
-                noteText.innerHTML = 'Exchanged positions between elements at index <code>' + idx1 + '</code> and <code>' + idx2 + '</code>. The larger value propagates towards the end of the collection.';
+            if (curr.action === 'MUTATE') {
+                noteCard.className = 'teacher-note mutate';
+                noteType.innerText = 'STATE MUTATION (WRITE / SWAP)';
+                noteText.innerHTML = 'Index ' + JSON.stringify(curr.changed_indices) + ' modified in <code>' + (curr.array_name || 'arr') + '</code>. Array updated to reflect assignments.';
             } else {
                 noteCard.className = 'teacher-note';
-                noteType.innerText = 'TRACE';
-                noteText.innerText = 'Stepping through code execution.';
+                noteType.innerText = 'EXECUTION OBSERVATION';
+                const ptrPairs = Object.entries(curr.pointers || {}).map(([k, v]) => '<code>' + k + '=' + v + '</code>').join(', ');
+                noteText.innerHTML = 'Executing line <strong>' + curr.line + '</strong>. Active loop pointers: ' + (ptrPairs || 'None');
             }
 
-            // 5. Variable Watch Grid
-            const varGrid = document.getElementById('var-grid');
-            varGrid.innerHTML = '';
+            // 5. Memory Array Stage with Overhead Pointers
+            const container = document.getElementById('cells-container');
+            container.innerHTML = '';
+            document.getElementById('array-label').innerText = 'Memory Array Layout (' + (curr.array_name || 'arr') + ')';
 
-            const activeVars = [
-                { name: 'j (current)', val: idx1 !== null ? idx1 : '-' },
-                { name: 'j + 1 (adjacent)', val: idx2 !== null ? idx2 : '-' },
-                { name: 'arr[j]', val: val1 !== null ? val1 : '-' },
-                { name: 'arr[j+1]', val: val2 !== null ? val2 : '-' },
-                { name: 'len(arr)', val: curr.array.length }
-            ];
+            if (curr.array && Array.isArray(curr.array)) {
+                curr.array.forEach((val, idx) => {
+                    const col = document.createElement('div');
+                    col.className = 'cell-column';
 
-            activeVars.forEach(v => {
-                const card = document.createElement('div');
-                card.className = 'var-card';
-                card.innerHTML = '<div class="var-name">' + v.name + '</div><div class="var-val">' + v.val + '</div>';
-                varGrid.appendChild(card);
-            });
+                    // Overhead Pointer Marker
+                    const pointerDiv = document.createElement('div');
+                    pointerDiv.className = 'pointer-tag';
 
-            // 6. Detailed Interactive Array Stage with Overhead Pointers
-            const cellsContainer = document.getElementById('cells-container');
-            cellsContainer.innerHTML = '';
+                    const matchingPointers = [];
+                    for (const [pName, pIdx] of Object.entries(curr.pointers || {})) {
+                        if (pIdx === idx) matchingPointers.push(pName);
+                    }
 
-            curr.array.forEach((num, idx) => {
-                const col = document.createElement('div');
-                col.className = 'cell-column';
+                    if (matchingPointers.length > 0) {
+                        pointerDiv.innerHTML = '<span class="pointer-badge">' + matchingPointers.join(', ') + '</span><span>▼</span>';
+                    }
+                    col.appendChild(pointerDiv);
 
-                // Overhead Pointer Marker
-                const pointer = document.createElement('div');
-                pointer.className = 'pointer-tag';
-                if (idx === idx1) {
-                    pointer.innerHTML = '<div style="text-align:center;"><div class="pointer-arrow">▼</div>j</div>';
-                } else if (idx === idx2) {
-                    pointer.innerHTML = '<div style="text-align:center;"><div class="pointer-arrow">▼</div>j+1</div>';
-                }
-                col.appendChild(pointer);
+                    // Array Block
+                    const box = document.createElement('div');
+                    box.className = 'cell-box';
+                    box.innerText = val;
 
-                // Array Cell Element
-                const box = document.createElement('div');
-                box.className = 'cell-box';
-                box.innerText = num;
+                    if (curr.changed_indices && curr.changed_indices.includes(idx)) {
+                        box.classList.add('mutate-active');
+                    } else if (matchingPointers.length > 0) {
+                        box.classList.add('pointer-active');
+                    }
+                    col.appendChild(box);
 
-                if (curr.indices && curr.indices.includes(idx)) {
-                    box.classList.add(curr.type === 'SWAP' ? 'swapping' : 'comparing');
-                }
-                col.appendChild(box);
+                    // Index Marker
+                    const idxLabel = document.createElement('div');
+                    idxLabel.className = 'cell-index';
+                    idxLabel.innerText = '[' + idx + ']';
+                    col.appendChild(idxLabel);
 
-                // Index indicator
-                const idxLabel = document.createElement('div');
-                idxLabel.className = 'cell-index';
-                idxLabel.innerText = '[' + idx + ']';
-                col.appendChild(idxLabel);
-
-                cellsContainer.appendChild(col);
-            });
+                    container.appendChild(col);
+                });
+            }
         }
 
-        // Stepping Controls
         document.getElementById('btn-next').onclick = () => {
-            if (index < events.length - 1) {
-                index++;
-                render();
-            }
+            if (index < events.length - 1) { index++; render(); }
         };
-
         document.getElementById('btn-prev').onclick = () => {
-            if (index > 0) {
-                index--;
-                render();
-            }
+            if (index > 0) { index--; render(); }
         };
-
         document.getElementById('btn-reset').onclick = () => {
-            index = 0;
-            render();
+            index = 0; render();
         };
 
-        // Keyboard Shortcut Stepping (Arrow keys)
         window.addEventListener('keydown', (e) => {
             if (e.key === 'ArrowRight') document.getElementById('btn-next').click();
             if (e.key === 'ArrowLeft') document.getElementById('btn-prev').click();

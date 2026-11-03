@@ -2,73 +2,82 @@
 import json
 import ast
 import copy
+import inspect
 
-class BubbleSortAnalyzer(ast.NodeVisitor):
-    def __init__(self):
-        self.has_nested_loops = False
-        self.has_adjacent_compare = False
-        self.has_conditional_swap = False
-
-    def visit_For(self, node):
-        for child in node.body:
-            if isinstance(child, ast.For):
-                self.has_nested_loops = True
-                self._analyze_inner(child)
-        self.generic_visit(node)
-
-    def _analyze_inner(self, node):
-        for stmt in node.body:
-            if isinstance(stmt, ast.If):
-                if isinstance(stmt.test, ast.Compare):
-                    self.has_adjacent_compare = True
-                for s in stmt.body:
-                    if isinstance(s, ast.Assign) and isinstance(s.targets[0], ast.Tuple):
-                        self.has_conditional_swap = True
-
-class AlgoTracer:
-    def __init__(self, func_name):
-        self.func_name = func_name
+class ExecutionTracer:
+    def __init__(self, target_func_name):
+        self.target_func_name = target_func_name
         self.events = []
-        self.step = 1
-        self.prev_state = None
-        self.prev_line = None
+        self.step_count = 1
+        self.prev_locals = {}
 
     def trace_calls(self, frame, event, arg):
-        if frame.f_code.co_name == self.func_name:
+        if frame.f_code.co_name == self.target_func_name:
             return self.trace_lines
         return None
 
     def trace_lines(self, frame, event, arg):
         if event != 'line':
-            return
+            return self.trace_lines
+
         line = frame.f_lineno
-        locals_ = frame.f_locals
+        raw_locals = frame.f_locals
 
-        if 'arr' in locals_:
-            current = copy.deepcopy(locals_['arr'])
-            j = locals_.get('j', None)
+        # Extract only JSON-serializable primitives and collections
+        current_locals = {}
+        for k, v in raw_locals.items():
+            if k.startswith('__'):
+                continue
+            if isinstance(v, (int, float, str, bool)):
+                current_locals[k] = v
+            elif isinstance(v, list):
+                current_locals[k] = copy.deepcopy(v)
+            elif isinstance(v, (set, tuple)):
+                current_locals[k] = list(v)
+            elif isinstance(v, dict):
+                current_locals[k] = copy.deepcopy(v)
 
-            if self.prev_state is not None and self.prev_state != current:
-                self.events.append({
-                    "type": "SWAP",
-                    "step": self.step,
-                    "line": self.prev_line,
-                    "array": current,
-                    "indices": [j, j + 1] if j is not None else []
-                })
-                self.step += 1
-            elif j is not None and j + 1 < len(current):
-                self.events.append({
-                    "type": "COMPARE",
-                    "step": self.step,
-                    "line": line,
-                    "array": current,
-                    "indices": [j, j + 1]
-                })
-                self.step += 1
+        # Detect the primary working array
+        primary_arr_name = None
+        primary_arr = None
+        for k, v in current_locals.items():
+            if isinstance(v, list) and (len(v) == 0 or isinstance(v[0], (int, float, str))):
+                primary_arr_name = k
+                primary_arr = v
+                break
 
-            self.prev_state = current
-        self.prev_line = line
+        # Detect pointer variables (integers that fall within array bounds)
+        pointers = {}
+        if primary_arr is not None and len(primary_arr) > 0:
+            for k, v in current_locals.items():
+                if isinstance(v, int) and 0 <= v < len(primary_arr):
+                    pointers[k] = v
+
+        # Check for mutations
+        changed_indices = []
+        action = "STEP"
+        if primary_arr_name and primary_arr_name in self.prev_locals:
+            prev_arr = self.prev_locals[primary_arr_name]
+            if isinstance(prev_arr, list) and len(prev_arr) == len(primary_arr):
+                for idx in range(len(primary_arr)):
+                    if primary_arr[idx] != prev_arr[idx]:
+                        changed_indices.append(idx)
+                if changed_indices:
+                    action = "MUTATE"
+
+        self.events.append({
+            "step": self.step_count,
+            "line": line,
+            "action": action,
+            "locals": current_locals,
+            "array_name": primary_arr_name,
+            "array": primary_arr,
+            "pointers": pointers,
+            "changed_indices": changed_indices
+        })
+
+        self.step_count += 1
+        self.prev_locals = copy.deepcopy(current_locals)
         return self.trace_lines
 
 def main():
@@ -77,17 +86,12 @@ def main():
         print(json.dumps([]))
         return
 
-    # 1. Structural AST Recognition
     try:
         tree = ast.parse(source_code)
     except SyntaxError:
         print(json.dumps([]))
         return
 
-    analyzer = BubbleSortAnalyzer()
-    analyzer.visit(tree)
-
-    # 2. Dynamic Execution & Tracing
     env = {}
     try:
         exec(source_code, env)
@@ -95,23 +99,24 @@ def main():
         print(json.dumps([]))
         return
 
-    target_func = env.get("bubble_sort")
-    if not target_func:
-        # Fallback: grab first user-defined function in scope
-        for k, v in env.items():
-            if callable(v) and not k.startswith("__"):
-                target_func = v
-                break
+    # Find the user's function (skip standard builtins and imports)
+    target_func = None
+    for k, v in env.items():
+        if callable(v) and not k.startswith("__") and inspect.isfunction(v):
+            target_func = v
 
     if not target_func:
         print(json.dumps([]))
         return
 
-    test_input = [5, 2, 8, 1, 4]
-    tracer = AlgoTracer(target_func.__name__)
+    tracer = ExecutionTracer(target_func.__name__)
     sys.settrace(tracer.trace_calls)
+
+    test_input = [5, 2, 8, 1, 4]
     try:
         target_func(test_input)
+    except Exception:
+        pass
     finally:
         sys.settrace(None)
 
